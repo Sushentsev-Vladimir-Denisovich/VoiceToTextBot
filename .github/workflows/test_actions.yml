@@ -1,0 +1,72 @@
+name: Test Telegram Bot Release
+
+on:
+  workflow_dispatch: # Запуск вручную
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.13'
+      
+      - name: Create virtual environment
+        run: python3 -m venv .venv
+
+      - name: Activate virtual environment
+        run: source .venv/bin/activate  # Или .venv\Scripts\activate для Windows
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Build artifact
+        run: |
+          zip -r bot.zip bot.py constants.py methods.py requirements.txt
+          if [[ "${{ runner.os }}" == "Windows" ]]; then
+            echo "Creating deploy.bat" > deploy.bat
+            echo "@echo off" >> deploy.bat
+            echo "7z x bot_code.zip -o." >> deploy.bat
+            echo "python bot.py" >> deploy.bat
+          else
+            echo "Creating deploy.sh" > deploy.sh
+            chmod +x deploy.sh
+            echo "#!/bin/bash" >> deploy.sh
+            echo "unzip bot_code.zip" >> deploy.sh
+            echo "python3 bot.py" >> deploy.sh
+          fi
+
+      - name: Create Release (Test) # Изменено имя для ясности
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const releaseName = 'Release from PR #' + context.payload.pull_request.number;
+            const releaseBody = 'Release built from Pull Request #' + context.payload.pull_request.number;
+
+
+            github.rest.repos.createRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              tag_name: 'test-release',  # Создаем тестовый тег
+              name: releaseName,
+              body: releaseBody,
+              draft: true, # Создаем черновик релиза для тестирования
+              prerelease: true
+            }).then(({data}) => {
+              console.log(`Created release: ${data.html_url}`);
+              github.rest.repos.uploadReleaseAsset({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                release_id: data.id,
+                name: 'bot.zip',
+                data: context.payload.repository.contents.zip,
+                contentType: 'application/zip'
+              }).then(({ data }) => {
+                console.log(`Uploaded asset: ${data.browser_download_url}`);
+              });
+            });
