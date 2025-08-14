@@ -1,9 +1,7 @@
 name: Release Telegram Bot
 
 on:
-  push:
-    tags:
-      - 'v*' # Release на каждый новый тег, начинающийся с 'v'
+  workflow_dispatch: # Запуск вручную
 
 jobs:
   build:
@@ -36,25 +34,24 @@ jobs:
             echo "python3 bot.py" >> deploy.sh
           fi
 
-      - name: Create Release
+      - name: Create Release (Test) # Изменено имя для ясности
         uses: actions/github-script@v6
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const tag = context.ref.replace('refs/tags/', '');
-            const releaseName = Release from PR #${context.payload.pull_request.number};
-            const releaseBody = Release built from Pull Request #${context.payload.pull_request.number};
+            const releaseName = 'Test Release';
+            const releaseBody = 'Test release from workflow_dispatch';
 
             github.rest.repos.createRelease({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              tag_name: tag,
+              tag_name: 'test-release',  # Создаем тестовый тег
               name: releaseName,
               body: releaseBody,
-              draft: false, # Измените на true, если хотите создавать черновики релизов
-              prerelease: true # Помечаем как предварительный релиз
+              draft: true, # Создаем черновик релиза для тестирования
+              prerelease: true
             }).then(({data}) => {
-              console.log(Created release: ${data.html_url});
+              console.log(`Created release: ${data.html_url}`);
               github.rest.repos.uploadReleaseAsset({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
@@ -63,6 +60,6 @@ jobs:
                 data: context.payload.repository.contents.zip,
                 contentType: 'application/zip'
               }).then(({ data }) => {
-                console.log(Uploaded asset: ${data.browser_download_url});
-              })
+                console.log(`Uploaded asset: ${data.browser_download_url}`);
+              });
             });
