@@ -42,20 +42,23 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const releaseName = 'Release from PR #' + context.payload.pull_request.number;
-            const releaseBody = 'Release built from Pull Request #' + context.payload.pull_request.number;
+            const releaseName = 'Test Release';
+            const releaseBody = 'Test release from manual run';
             const fs = require('fs');
             const path = require('path');
+            const pullRequestNumber = context.payload.pull_request ? context.payload.pull_request.number : 'manual'; // Обработка отсутствия pull request
 
-            const file = fs.readFileSync(path.join(process.env.GITHUB_WORKSPACE, 'bot.zip'));
+            const filePath = path.join(process.env.GITHUB_WORKSPACE, 'bot.zip');
+            const file = fs.readFileSync(filePath);
+
 
             github.rest.repos.createRelease({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              tag_name: 'pr-' + context.payload.pull_request.number,
+              tag_name: 'test-release-' + pullRequestNumber, // Используем pullRequestNumber или 'manual'
               name: releaseName,
               body: releaseBody,
-              draft: false,
+              draft: true, //  Для тестового запуска - черновик релиза
               prerelease: true
             }).then(({data}) => {
               console.log('Created release: ' + data.html_url);
@@ -64,7 +67,7 @@ jobs:
                 repo: context.repo.repo,
                 release_id: data.id,
                 name: 'bot.zip',
-                data: file, // Тут передаем содержимое файла
+                data: file,
                 contentType: 'application/zip'
               }).then(({ data }) => {
                 console.log('Uploaded asset: ' + data.browser_download_url);
@@ -74,4 +77,6 @@ jobs:
             }).catch(error => {
               console.error('Error creating release:', error);
             });
+
+
 
