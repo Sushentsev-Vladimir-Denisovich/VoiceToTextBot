@@ -1,4 +1,4 @@
-name: Release Telegram Bot
+name: Test Telegram Bot Release
 
 on:
   workflow_dispatch: # Запуск вручную
