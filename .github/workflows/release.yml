@@ -49,7 +49,7 @@ jobs:
             const fs = require('fs');
             const path = require('path');
 
-            const file = fs.readFileSync(path.join(__dirname, 'bot.zip'));
+            const file = fs.readFileSync(path.join(process.env.GITHUB_WORKSPACE, 'bot.zip'));
 
             github.rest.repos.createRelease({
               owner: context.repo.owner,
