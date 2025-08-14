@@ -45,8 +45,9 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const releaseName = 'Test Release';
-            const releaseBody = 'Test release from workflow_dispatch';
+            const releaseName = 'Release from PR #' + context.payload.pull_request.number;
+            const releaseBody = 'Release built from Pull Request #' + context.payload.pull_request.number;
+
 
             github.rest.repos.createRelease({
               owner: context.repo.owner,

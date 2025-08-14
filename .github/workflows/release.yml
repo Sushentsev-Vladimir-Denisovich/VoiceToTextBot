@@ -41,8 +41,8 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const releaseName = Release from PR #${context.payload.pull_request.number};
-            const releaseBody = Release built from Pull Request #${context.payload.pull_request.number};
+            const releaseName = 'Release from PR #' + context.payload.pull_request.number;
+            const releaseBody = 'Release built from Pull Request #' + context.payload.pull_request.number;
 
             github.rest.repos.createRelease({
               owner: context.repo.owner,
