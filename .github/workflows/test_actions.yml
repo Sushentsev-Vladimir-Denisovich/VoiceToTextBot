@@ -58,7 +58,7 @@ jobs:
               tag_name: 'test-release-' + pullRequestNumber, // Используем pullRequestNumber или 'manual'
               name: releaseName,
               body: releaseBody,
-              draft: true, //  Для тестового запуска - черновик релиза
+              draft: false, //  Для тестового запуска - черновик релиза
               prerelease: true
             }).then(({data}) => {
               console.log('Created release: ' + data.html_url);
