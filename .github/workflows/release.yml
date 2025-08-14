@@ -24,7 +24,7 @@ jobs:
         run: zip -r bot.zip bot.py constants.py methods.py requirements.txt
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: bot
           path: bot.zip
