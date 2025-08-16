@@ -34,6 +34,7 @@ jobs:
           name: bot
           path: bot.zip
 
+
   release:
     needs: build
     runs-on: ubuntu-latest
@@ -44,47 +45,26 @@ jobs:
           name: bot
           path: ./
 
-      - name: Extract archive
-        run: unzip bot.zip
-
       - name: Create Release
-        uses: actions/github-script@v6
+        uses: actions/create-release@v1
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const releaseName = 'Test Release';
-            const releaseBody = 'Test release from manual run';
-            const fs = require('fs');
-            const path = require('path');
-            const pullRequestNumber = context.payload.pull_request ? context.payload.pull_request.number : 'manual';
-            const zipFilePath = path.join(process.env.GITHUB_WORKSPACE, 'bot.zip');
-            const zipFile = fs.readFileSync(zipFilePath);
-            const runScriptPath = path.join(process.env.GITHUB_WORKSPACE, 'run.sh');
-            const runScript = fs.readFileSync(runScriptPath);
+          tag_name: test-release-manual
+          release_name: Test Release
+          body: Test release from manual run
+          draft: false
+          prerelease: true
 
-            github.rest.repos.createRelease({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              tag_name: 'test-release-' + pullRequestNumber,
-              name: releaseName,
-              body: releaseBody,
-              draft: false,
-              prerelease: true
-            }).then(({data}) => {
-              console.log('Created release: ' + data.html_url);
-              github.rest.repos.uploadReleaseAsset({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                release_id: data.id,
-                name: 'bot.zip',
-                data: zipFile,
-                contentType: 'application/zip'
-              }).then(() => {
-                console.log('Uploaded bot.zip');
-              }).catch(error => {
-                console.error('Error uploading bot.zip asset:', error);
-              });
-            }).catch(error => {
-              console.error('Error creating release:', error);
-            });
+      - name: Upload Release Asset - bot.zip
+        uses: actions/upload-artifact@v3
+        with:
+          name: bot.zip
+          path: ./bot.zip
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+
+      - name: Upload Release Asset - run.sh
+        uses: actions/upload-artifact@v3
+        with:
+          name: run.sh
+          path: ./run.sh
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
 
