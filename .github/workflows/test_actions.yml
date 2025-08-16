@@ -1,70 +1,47 @@
 name: Test Telegram Bot Release
 
+#on:
+#  push:
+#    tags:
+#      - 'v*'   # запускается при пуше тега вида v1.0.0
 on:
   workflow_dispatch:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
+
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.13'
+          python-version: "3.11"
 
       - name: Install dependencies
-        run: pip install -r requirements.txt
-
-      - name: Create run script (Bash)
         run: |
-          echo '#!/bin/bash' > run.sh
-          echo 'unzip bot.zip' >> run.sh
-          echo 'python bot.py' >> run.sh
-          chmod +x run.sh
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller
 
-      - name: Build artifact
-        run: zip -r bot.zip bot.py constants.py methods.py requirements.txt
+      - name: Build EXE with PyInstaller
+        run: |
+          pyinstaller --onefile bot.py --name VoiceToTextBot
 
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
         with:
-          name: bot
-          path: bot.zip
-
-
-  release:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Download artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: bot
-          path: ./
-
-      - name: Create Release
-        uses: actions/create-release@v1
-        with:
-          tag_name: test-release-manual
-          release_name: Test Release
-          body: Test release from manual run
-          draft: false
-          prerelease: true
-
-      - name: Upload Release Asset - bot.zip
-        uses: actions/upload-artifact@v4
-        with:
-          name: bot.zip
-          path: ./bot.zip
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-
-      - name: Upload Release Asset - run.sh
-        uses: actions/upload-artifact@v4
-        with:
-          name: run.sh
-          path: ./run.sh
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-
+          tag_name: ${{ github.ref_name }}
+          name: Release ${{ github.ref_name }}
+          body: |
+            Автоматический релиз для версии ${{ github.ref_name }}.
+            В архиве находятся:
+            - VoiceToTextBot.exe
+            - пример .env.example
+          files: |
+            dist/VoiceToTextBot.exe
+            .env.example
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
