@@ -26,7 +26,7 @@ jobs:
           chmod +x run.sh
 
       - name: Build artifact
-        run: zip -r bot.zip bot.py constants.py methods.py requirements.txt run.sh
+        run: zip -r bot.zip bot.py constants.py methods.py requirements.txt
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -43,6 +43,9 @@ jobs:
         with:
           name: bot
           path: ./
+
+      - name: Extract archive
+        run: unzip bot.zip
 
       - name: Create Release
         uses: actions/github-script@v6
@@ -77,21 +80,11 @@ jobs:
                 data: zipFile,
                 contentType: 'application/zip'
               }).then(() => {
-                github.rest.repos.uploadReleaseAsset({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  release_id: data.id,
-                  name: 'run.sh',
-                  data: runScript,
-                  contentType: 'application/x-sh'
-                }).then(({ data }) => {
-                  console.log('Uploaded asset: ' + data.browser_download_url);
-                }).catch(error => {
-                  console.error('Error uploading run.sh asset:', error);
-                });
+                console.log('Uploaded bot.zip');
               }).catch(error => {
                 console.error('Error uploading bot.zip asset:', error);
               });
             }).catch(error => {
               console.error('Error creating release:', error);
             });
+
