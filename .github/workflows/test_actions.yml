@@ -37,9 +37,9 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: pr-${{ github.event.pull_request.number }}
-          name: Release from PR #${{ github.event.pull_request.number }}
+          name: Release from PR test
           body: |
-            Автоматический релиз из pull request #${{ github.event.pull_request.number }}.
+            Автоматический релиз из pull request TEST.
             В архиве находятся:
             - VoiceToTextBot.exe
             - пример .env.example
