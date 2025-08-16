@@ -42,7 +42,7 @@ jobs:
             Автоматический релиз из pull request TEST.
             В архиве находятся:
             - VoiceToTextBot.exe
-            - пример .env.example
+            - пример .env.example 
           files: |
             VoiceToTextBot.zip
         env:
