@@ -1,7 +1,7 @@
 name: Test Telegram Bot Release
 
 on:
-  workflow_dispatch: # Запуск вручную
+  workflow_dispatch:
 
 jobs:
   build:
@@ -18,8 +18,15 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
+      - name: Create run script (Bash)
+        run: |
+          echo '#!/bin/bash' > run.sh
+          echo 'unzip bot.zip' >> run.sh
+          echo 'python bot.py' >> run.sh
+          chmod +x run.sh
+
       - name: Build artifact
-        run: zip -r bot.zip bot.py constants.py methods.py requirements.txt
+        run: zip -r bot.zip bot.py constants.py methods.py requirements.txt run.sh
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -46,19 +53,19 @@ jobs:
             const releaseBody = 'Test release from manual run';
             const fs = require('fs');
             const path = require('path');
-            const pullRequestNumber = context.payload.pull_request ? context.payload.pull_request.number : 'manual'; // Обработка отсутствия pull request
-
-            const filePath = path.join(process.env.GITHUB_WORKSPACE, 'bot.zip');
-            const file = fs.readFileSync(filePath);
-
+            const pullRequestNumber = context.payload.pull_request ? context.payload.pull_request.number : 'manual';
+            const zipFilePath = path.join(process.env.GITHUB_WORKSPACE, 'bot.zip');
+            const zipFile = fs.readFileSync(zipFilePath);
+            const runScriptPath = path.join(process.env.GITHUB_WORKSPACE, 'run.sh');
+            const runScript = fs.readFileSync(runScriptPath);
 
             github.rest.repos.createRelease({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              tag_name: 'test-release-' + pullRequestNumber, // Используем pullRequestNumber или 'manual'
+              tag_name: 'test-release-' + pullRequestNumber,
               name: releaseName,
               body: releaseBody,
-              draft: false, //  Для тестового запуска - черновик релиза
+              draft: false,
               prerelease: true
             }).then(({data}) => {
               console.log('Created release: ' + data.html_url);
@@ -67,16 +74,24 @@ jobs:
                 repo: context.repo.repo,
                 release_id: data.id,
                 name: 'bot.zip',
-                data: file,
+                data: zipFile,
                 contentType: 'application/zip'
-              }).then(({ data }) => {
-                console.log('Uploaded asset: ' + data.browser_download_url);
+              }).then(() => {
+                github.rest.repos.uploadReleaseAsset({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  release_id: data.id,
+                  name: 'run.sh',
+                  data: runScript,
+                  contentType: 'application/x-sh'
+                }).then(({ data }) => {
+                  console.log('Uploaded asset: ' + data.browser_download_url);
+                }).catch(error => {
+                  console.error('Error uploading run.sh asset:', error);
+                });
               }).catch(error => {
-                console.error('Error uploading asset:', error);
+                console.error('Error uploading bot.zip asset:', error);
               });
             }).catch(error => {
               console.error('Error creating release:', error);
             });
-
-
-
