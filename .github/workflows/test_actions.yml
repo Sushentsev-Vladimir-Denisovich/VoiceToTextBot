@@ -55,14 +55,14 @@ jobs:
           prerelease: true
 
       - name: Upload Release Asset - bot.zip
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: bot.zip
           path: ./bot.zip
           upload_url: ${{ steps.create_release.outputs.upload_url }}
 
       - name: Upload Release Asset - run.sh
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: run.sh
           path: ./run.sh
