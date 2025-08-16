@@ -1,14 +1,11 @@
 name: Test Telegram Bot Release
 
-#on:
-#  push:
-#    tags:
-#      - 'v*'   # запускается при пуше тега вида v1.0.0
 on:
   workflow_dispatch:
 
 jobs:
   build:
+    if: github.event.pull_request.merged == true   # только если PR был смержен
     runs-on: windows-latest
 
     steps:
@@ -18,7 +15,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.13"
+          python-version: "3.11"
 
       - name: Install dependencies
         run: |
@@ -30,18 +27,24 @@ jobs:
         run: |
           pyinstaller --onefile bot.py --name VoiceToTextBot
 
+      - name: Package release files
+        run: |
+          mkdir release
+          copy dist\\VoiceToTextBot.exe release\\VoiceToTextBot.exe
+          copy .env.example release\\.env.example
+          powershell Compress-Archive -Path release\\* -DestinationPath VoiceToTextBot.zip
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.ref_name }}
-          name: Release ${{ github.ref_name }}
+          tag_name: pr-${{ github.event.pull_request.number }}
+          name: Release from PR #${{ github.event.pull_request.number }}
           body: |
-            Автоматический релиз для версии ${{ github.ref_name }}.
+            Автоматический релиз из pull request #${{ github.event.pull_request.number }}.
             В архиве находятся:
             - VoiceToTextBot.exe
             - пример .env.example
           files: |
-            dist/VoiceToTextBot.exe
-            .env.example
+            VoiceToTextBot.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
